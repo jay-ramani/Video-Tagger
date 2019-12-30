@@ -30,7 +30,7 @@ For example:
 ```
 Note: Windows path separators have to double escaped using another backslash, as shown in the example above. Unless these tools have already been added to the PATH environment variable, you would have to update the environment, or manually feed the path for use in Linux or one of the Unices.
 
-Also, ensure that files to tag are not read-only. While clearing the attribute can be implemented in the script itself, I will not go about it. Hence, the onus is on the user (you!) to ensure files are write-able (read-only attributes are not set). I will ignore such bug reports.
+Also, ensure that files to tag are not read-only. While clearing the attribute can be implemented in the script itself, I will not go about it. Hence, the onus is on the user (you!) to ensure files are write-able (read-only attributes are not set). I will ignore any bug reports relating to the user not setting proper permissions.
 
 ## How the Currently Set Title is Parsed
 My collection of movie files are named in the format below:
@@ -83,6 +83,9 @@ You might want to skip this option if you'd like the script to execute a bit fas
 
 ## Reporting a Summary
 At the end of its execution, the script presents a summary of files probed, tagged, failures (if any) and time taken. Again, this comes in handy when dealing with a large number of files.
+
+## Logging
+For a post-mortem, or simply quenching curiosity, a log file is generated with whatever is attempted by the script. This log is local to where the script resides.
 
 ## Testing and Reporting Bugs
 The tagger has been tested on Windows 10, and is **untested** on Linux and other Unices. Would be great if someone can help with testing on these platforms and provide feedback.
