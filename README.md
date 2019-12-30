@@ -21,7 +21,7 @@ path_ffprobe
 
 For example:
 
-  if platform.system() == "Windows":
+	if platform.system() == "Windows":
   # If using the Windows Operating System
     path_mkvmerge = "C:\\Program Files\\MKVToolNix\\mkvpropedit.exe"
     path_ffprobe = "C:\\ffmpeg\\bin\\ffprobe.exe"
