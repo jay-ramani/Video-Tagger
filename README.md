@@ -4,9 +4,11 @@ What This Does
 --------------
 A Python script to tag video files with metadata. Currently, only title tagging of .mkv (Matroska format) files is supported.
 
+Note: Use a Python 3.6 environment or above to execute the script.
+
 External Tools Used
 -------------------
-The probing and tagging code uses external tools (ffprobe and mkvpropedit). 'ffprobe' is used to probe the currently set metadata (only title for now), and if any different from the title to be set at hand, invoke 'mkvpropedit' to set so.
+Obviously, Python (available at https://www.python.org) is used to interpret the script itself. The probing and tagging code uses external tools (ffprobe and mkvpropedit). 'ffprobe' is used to probe the currently set metadata (only title for now), and if any different from the title to be set at hand, invoke 'mkvpropedit' to set so.
 
 Where to Download the External Tools From
 -----------------------------------------
@@ -22,11 +24,9 @@ path_ffprobe
 For example:
 
 	if platform.system() == "Windows":
-  # If using the Windows Operating System
     path_mkvmerge = "C:\\Program Files\\MKVToolNix\\mkvpropedit.exe"
     path_ffprobe = "C:\\ffmpeg\\bin\\ffprobe.exe"
 	else:
-  # If using a Unix-like Operating System
 		path_mkvmerge = "mkvpropedit"
 		path_ffprobe = "ffprobe"
 
