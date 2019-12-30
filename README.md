@@ -6,7 +6,7 @@ A Python script to tag video files with metadata. Currently, only title tagging 
 Note: Use a Python 3.6 environment or above to execute the script.
 
 ## External Tools Used
-Obviously, [Python] (https://www.python.org) is used to interpret the script itself. The probing and tagging code uses external tools (ffprobe and mkvpropedit). 'ffprobe' is used to probe the currently set metadata (only title for now), and if any different from the title to be set at hand, invoke 'mkvpropedit' to set so.
+Obviously, [Python](https://www.python.org) is used to interpret the script itself. The probing and tagging code uses external tools (ffprobe and mkvpropedit). 'ffprobe' is used to probe the currently set metadata (only title for now), and if any different from the title to be set at hand, invoke 'mkvpropedit' to set so.
 
 ## Where to Download the External Tools From
 'ffprobe' is part of the open source ffmpeg package available from https://www.ffmpeg.org, and 'mkvpropedit' is part of the open source MKVToolNix pacakage available from https://mkvtoolnix.download.
@@ -22,8 +22,8 @@ path_ffprobe
 For example:
 ```python
 	if platform.system() == "Windows":
-    path_mkvmerge = "C:\\Program Files\\MKVToolNix\\mkvpropedit.exe"
-    path_ffprobe = "C:\\ffmpeg\\bin\\ffprobe.exe"
+		path_mkvmerge = "C:\\Program Files\\MKVToolNix\\mkvpropedit.exe"
+		path_ffprobe = "C:\\ffmpeg\\bin\\ffprobe.exe"
 	else:
 		path_mkvmerge = "mkvpropedit"
 		path_ffprobe = "ffprobe"
@@ -46,7 +46,7 @@ Assuming both the files above don't have titles set, the year and/or a 3D marker
 ## How to Batch Process/Use on Single Files
 ### Batch Processing Recursively/A Selection Through a Simple Right-Click
   On Windows, create a file called "Video Tagger.cmd", or whatever you like but with a .cmd extension, paste the contents as below, and on the Windows Run window, type "shell:sendto" and copy this file in the directory that opens (this is where your items that show up on right-clicking and choosing 'Send To' appear):
-```dos
+```batch
   @echo off
   cls
   set PATH=%PATH%;C:\Python
