@@ -6,7 +6,7 @@ A Python script to tag video files with metadata. Currently, only title tagging 
 Note: Use a Python 3.6 environment or above to execute the script.
 
 ## External Tools Used
-Obviously, [Python](https://www.python.org) is used to interpret the script itself. The probing and tagging code uses external tools (ffprobe and mkvpropedit). 'ffprobe' is used to probe the currently set metadata (only title for now), and if any different from the title to be set at hand, invoke 'mkvpropedit' to set so.
+Obviously, [Python](https://www.python.org) is used to interpret the script itself. The probing and tagging code uses external tools ('[ffprobe](https://www.ffmpeg.org/)' and '[mkvpropedit](https://mkvtoolnix.download/)'). 'ffprobe' is used to probe the currently set metadata (only title for now), and if any different from the title to be set at hand, invoke 'mkvpropedit' to set so.
 
 ## Where to Download the External Tools From
 'ffprobe' is part of the open source ffmpeg package available from https://www.ffmpeg.org, and 'mkvpropedit' is part of the open source MKVToolNix pacakage available from https://mkvtoolnix.download.
