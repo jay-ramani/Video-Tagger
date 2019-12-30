@@ -1,4 +1,4 @@
-# video-tagger
+# Video Tagger
 
 ## What This Does
 A Python script to tag video files with metadata. Currently, only title tagging of .mkv (Matroska format) files is supported.
@@ -29,6 +29,8 @@ For example:
 		path_ffprobe = "ffprobe"
 ```
 Note: Windows path separators have to double escaped using another backslash, as shown in the example above. Unless these tools have already been added to the PATH environment variable, you would have to update the environment, or manually feed the path for use in Linux or one of the Unices.
+
+Also, ensure that files to tag are not read-only. While this could be implemented in the script itself, I will not go about it. Hence, the onus is on the user (you!) to ensure files are write-able (read-only attributes are not set). I will ignore such bug reports.
 
 ## How the Currently Set Title is Parsed
 My collection of movie files are named in the format below:
