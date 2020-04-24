@@ -32,6 +32,8 @@ Note: Windows path separators have to double escaped using another backslash, as
 
 Also, ensure that files to tag are not read-only. While clearing the attribute can be implemented in the script itself, I will not go about it. Hence, the onus is on the user (you!) to ensure files are write-able (read-only attributes are not set). I will ignore any bug reports relating to the user not setting proper permissions.
 
+If you'd like a tooltip notification, install [win10toast](https://pypi.org/project/win10toast/) with 'pip install win10toast'.
+
 ## How the Currently Set Title is Parsed
 My collection of movie files are named in the format below:
 ```
