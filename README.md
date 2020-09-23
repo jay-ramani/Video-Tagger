@@ -1,9 +1,9 @@
 # Video Tagger
 
-## What This Does
-A Python script to tag video files with metadata. Currently, only title tagging of .mkv (Matroska format) files is supported.
+## What This Is
+A Python script that spawns multiple threads to tag video files with metadata. Currently, only title tagging of .mkv (Matroska format) files is supported.
 
-Note: Use a Python 3.6 environment or above to execute the script.
+**Note**: Use a Python 3.6 environment or above to execute the script.
 
 ## External Tools Used
 Obviously, [Python](https://www.python.org) is used to interpret the script itself. The probing and tagging code uses external tools ('[ffprobe](https://www.ffmpeg.org/)' and '[mkvpropedit](https://mkvtoolnix.download/)'). `ffprobe` is used to probe the currently set metadata (only title for now), and if any different from the title to be set at hand, invoke `mkvpropedit` to set so.
