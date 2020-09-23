@@ -2,28 +2,39 @@
 # Name        : Video Resolution
 # Purpose     : Set metadata in video using format specific tools
 #             : Note: Requires a path defined for each tool
-# Author      : Jayendran Jayamkondam Ramani
 # Created     : 1:30 PM + 5:30 IST 19 March 2017
-# Copyright   : (c) Jayendran Jayamkondam Ramani
 # Licence     : GPL v3
 # Dependencies: Requires the following packages to be installed as pre-requisites
 #                   - win10toast (pip install win10toast; for Windows 10 toast notifications)
 # -------------------------------------------------------------------------------
-
 import logging
 import os
 import platform
+import multiprocessing
 import subprocess
 import sys
 import time
 import math
 import argparse
+import itertools
 
 from contextlib import suppress
-from win10toast import ToastNotifier
+
+# For spawning threads for the I/O bound tagger
+from multiprocessing.dummy import Pool as ThreadPool
+from threading import Thread, Lock
 
 INDEX_TOOL_PATH = 0
 INDEX_TOOL_OPTIONS = 1
+
+# Spawn four threads for each CPU core found
+COUNT_THREADS_TAGGER = multiprocessing.cpu_count() * 4
+
+mutex_count = Lock()
+mutex_time = Lock()
+mutex_console = Lock()
+mutex_list_files_failed_probe = Lock()
+mutex_list_files_failed_metadata_set = Lock()
 
 
 # Show tool tip/notification/toast message
@@ -34,6 +45,9 @@ def show_toast(tooltip_title, tooltip_message):
 	if platform.system() == "Linux":
 		os.system("notify-send \"" + tooltip_title + "\" \"" + tooltip_message + "\"")
 	else:
+		# For tooltip notification on Windows
+		from win10toast import ToastNotifier
+
 		toaster = ToastNotifier()
 		toaster.show_toast(tooltip_title, tooltip_message, icon_path = None, duration = 5)
 
@@ -44,8 +58,8 @@ def dict_metadata_tool_platform_get(extension, title_set, path_file):
 		path_mkvmerge = "C:\\Program Files\\MKVToolNix\\mkvpropedit.exe"
 		path_ffprobe = "C:\\ffmpeg\\bin\\ffprobe.exe"
 	else:
-		path_mkvmerge = "mkvpropedit"
-		path_ffprobe = "ffprobe"
+		path_mkvmerge = "/usr/bin/mkvpropedit"
+		path_ffprobe = "/usr/bin/ffprobe"
 
 	options_probe_ffprobe = (
 		"-v", "error", "-select_streams", "v:0", "-show_entries", "format_tags=title", "-print_format",
@@ -130,16 +144,26 @@ def parse_file_name_from_path(root):
 	return title, release_year
 
 
+# Lock the console and log for exclusive access to print
+def lock_console_print_and_log(string, stream_error = False):
+	with mutex_console:
+		if not stream_error:
+			print(string)
+			logging.info(string)
+		else:
+			print(string, flush = True)
+			logging.error(string)
+
+
 # Print a spacer to differentiate between outputs
 def print_and_log_spacer():
-	print("----- ----- ----- ----- -----")
-	logging.info("----- ----- ----- ----- -----")
+	lock_console_print_and_log("----- ----- ----- ----- -----")
 
 
 # Print completion status at every checkpoint defined by CHECKPOINT_FILES_QUERIED
-def percentage_completion_print(count_processed, count_total):
+def percentage_completion_print():
 	# Default CHECKPOINT_FILES_QUERIED to 1% of the files to be processed
-	CHECKPOINT_FILES_QUERIED = round(count_total * (1 / 100))
+	CHECKPOINT_FILES_QUERIED = round(set_metadata.total_count_percentage * (1 / 100))
 
 	# If count_total is too low, set CHECKPOINT_FILES_QUERIED accordingly for
 	# printing progress after every file. This is to prevent a divide-by-zero
@@ -149,24 +173,30 @@ def percentage_completion_print(count_processed, count_total):
 		CHECKPOINT_FILES_QUERIED = 1
 
 	# For every checkpoint defined in CHECKPOINT_FILES_QUERIED, print percentage completion
-	if not (count_processed % CHECKPOINT_FILES_QUERIED):
-		if count_processed < count_total:
+	if not (get_current_metadata.total_count_probe % CHECKPOINT_FILES_QUERIED):
+		# if (get_current_metadata.total_count_probe < set_metadata.total_count_percentage):
+		if percentage_completion_print.count_last_print != get_current_metadata.total_count_probe:
 			percent_complete = str(
-				math.floor((count_processed / count_total) * 100))
+				math.floor((get_current_metadata.total_count_probe / set_metadata.total_count_percentage) * 100))
 
 			print("\n-------------------------------------------")
 			logging.info("-------------------------------------------")
 
-			print(percent_complete + "% (" + str(count_processed) + "/" + str(
-				count_total) + ") of files in queue processed")
-			logging.info(percent_complete + "% (" + str(count_processed) + "/" + str(
-				count_total) + ") of files in queue processed")
+			print(percent_complete + "% (" + str(get_current_metadata.total_count_probe) + "/" + str(
+				set_metadata.total_count_percentage) + ") of files in queue processed")
+			logging.info(percent_complete + "% (" + str(get_current_metadata.total_count_probe) + "/" + str(
+				set_metadata.total_count_percentage) + ") of files in queue processed")
 
 			print("-------------------------------------------\n\n")
 			logging.info("-------------------------------------------\n")
-		else:
+
+			percentage_completion_print.count_last_print = get_current_metadata.total_count_probe
+	else:
+		if (get_current_metadata.total_count_probe == set_metadata.total_count_percentage):
 			print("\nAll files in queue processed\n")
 			logging.info("\nAll files in queue processed\n")
+
+percentage_completion_print.count_last_print = 0
 
 
 # Retrieve currently set title and return in UTF-8 encoding
@@ -176,50 +206,50 @@ def get_current_metadata(probe, path_file, list_failed_files_probe):
 	# Retrieve the file's current title from it's metadata, if at all set
 	# Check if the probe tool exists in the path defined
 	if os.path.isfile(probe[INDEX_TOOL_PATH]):
-		# Keep track of the number of files thrown for probing to present a total statistic at exit
-		get_current_metadata.total_count_files += 1
+		with mutex_count:
+			# Keep track of the number of files thrown for probing to present a total statistic at exit
+			get_current_metadata.total_count_files += 1
 
 		# Track probe start time in nano-seconds
-		time_start = time.monotonic_ns()
+		with mutex_time:
+			time_start = time.perf_counter_ns()
 
 		try:
 			output_probe = subprocess.run((probe[INDEX_TOOL_PATH], *probe[INDEX_TOOL_OPTIONS]),
 			                              universal_newlines = True, stdout = subprocess.PIPE, check = True).stdout
 		except subprocess.CalledProcessError as error_metadata_probe:
 			if error_metadata_probe.stderr:
-				print(error_metadata_probe.stderr)
-				logging.info(error_metadata_probe.stderr)
+				lock_console_print_and_log(error_metadata_probe.stderr, True)
 			if error_metadata_probe.output:
-				print(error_metadata_probe.output)
-				logging.error(error_metadata_probe.output)
+				lock_console_print_and_log(error_metadata_probe.output, True)
 
-			print("Command that resulted in the exception: " + str(error_metadata_probe.cmd) + "\n")
-			logging.error("Command that resulted in the exception: " + str(error_metadata_probe.cmd) + "\n")
+			lock_console_print_and_log(
+				"Command that resulted in the exception: " + str(error_metadata_probe.cmd) + "\n", True)
 
-			print("Error probing metadata from \'" + path_file + "\'")
-			print("Error", sys.exc_info())
-			logging.error("Error probing metadata from \'" + path_file + "\'" + str(sys.exc_info()))
+			lock_console_print_and_log("Error probing metadata from \'" + path_file + "\'", True)
+			lock_console_print_and_log("Error", sys.exc_info(), True)
 
 			show_toast("Error", "Failed to probe the title for one or more files. Check the log.")
 
-			# Append the failed file to a list that will be reported at exit
-			list_failed_files_probe.append(path_file)
+			with mutex_list_files_failed_probe:
+				# Append the failed file to a list that will be reported at exit
+				list_failed_files_probe.append(path_file)
 		else:
 			# Track probe end time in nano-seconds
-			time_end = time.monotonic_ns()
+			with mutex_time:
+				# Save the total time taken to probe files thrown at us, to report a statistic at exit
+				get_current_metadata.total_time_probe += time.perf_counter_ns() - time_start
 
 			title_current = (output_probe.strip()).encode("utf-8")
 
-			# Keep track of the number of files probed to present a total statistic at exit
-			get_current_metadata.total_count_probe += 1
-			# Save the total time taken to probe files thrown at us, to report a statistic at exit
-			get_current_metadata.total_time_probe += time_end - time_start
+			with mutex_count:
+				# Keep track of the number of files probed to present a total statistic at exit
+				get_current_metadata.total_count_probe += 1
 	else:
-		print("No probe tool found at \'" + probe[INDEX_TOOL_PATH] + "\' to read currently set title\n")
-		logging.error("No probe tool found at \'" + probe[INDEX_TOOL_PATH] + "\' to read currently set title\n")
+		lock_console_print_and_log(
+			"No probe tool found at \'" + probe[INDEX_TOOL_PATH] + "\' to read currently set title\n", True)
 
 	return title_current
-
 
 get_current_metadata.total_count_files = 0
 get_current_metadata.total_count_probe = 0
@@ -253,10 +283,10 @@ def set_metadata(path_file, list_failed_files_probe, list_failed_files_metadata_
 	# Proceed only if a metadata tool has been defined
 	if all(metadata) and all(probe):
 		# We got a valid tool to write metadata
-
 		if percentage_gather:
-			# We're only here to gather headcount
-			set_metadata.total_count_percentage += 1
+			with mutex_count:
+				# We're only here to gather headcount
+				set_metadata.total_count_percentage += 1
 
 			return
 
@@ -265,9 +295,7 @@ def set_metadata(path_file, list_failed_files_probe, list_failed_files_metadata_
 
 		if title_current == title_set:
 			# Nothing to do, if the current title is the same as the title to be set
-			print("The current title is already set to \'" + title_set.decode(
-				"utf-8") + "\' in \'" + path_file + "\'. Will skip processing...\n")
-			logging.info("The current title is already set to \'" + title_set.decode(
+			lock_console_print_and_log("The current title is already set to \'" + title_set.decode(
 				"utf-8") + "\' in \'" + path_file + "\'. Will skip processing...\n")
 		else:
 			# The titles are different; do the needful
@@ -276,71 +304,66 @@ def set_metadata(path_file, list_failed_files_probe, list_failed_files_metadata_
 				with suppress(Exception):
 					title_current = title_current.encode("utf-8")
 
-				print("The currently set title is \'" + title_current.decode("utf-8") + "\'\n")
-				logging.info("The currently set title is \'" + title_current.decode("utf-8") + "\'\n")
+				lock_console_print_and_log(
+					"The currently set title in \'" + path_file + "\' is \'" + title_current.decode("utf-8") + "\'\n")
 			else:
-				print("No title currently set in \'" + path_file + "\'\n")
-				logging.info("No title currently set in \'" + path_file + "\'\n")
+				lock_console_print_and_log("No title currently set in \'" + path_file + "\'\n")
 
 			# Check if the metadata tool exists in the path defined
 			if os.path.isfile(metadata[INDEX_TOOL_PATH]):
-				set_metadata.total_count_files += 1
+				with mutex_count:
+					set_metadata.total_count_files += 1
 
 				# TODO: Build a tag with the year of release to slap the mkv container with
 				# Writing the year with mkvpropedit is not supported by the MKV format developers!
-				# It has to be tagged separately with a tag. How lame can it be?
+				# It has to be tagged separately with a tag. How lame!
 
-				time_start = time.monotonic_ns()
+				time_start = time.perf_counter_ns()
 
 				try:
 					output = subprocess.run((metadata[INDEX_TOOL_PATH], *metadata[INDEX_TOOL_OPTIONS]), check = True,
 					                        universal_newlines = True, stdout = subprocess.PIPE).stdout
 				except subprocess.CalledProcessError as error_metadata_set:
 					if error_metadata_set.stderr:
-						print(error_metadata_set.stderr)
-						logging.info(error_metadata_set.stderr)
+						lock_console_print_and_log(error_metadata_set.stderr, True)
 					if error_metadata_set.output:
-						print(error_metadata_set.output)
-						logging.error(error_metadata_set.output)
+						lock_console_print_and_log(error_metadata_set.output, True)
 
-					print("Command that resulted in the exception: " + str(error_metadata_set.cmd) + "\n")
-					logging.info("Command that resulted in the exception: " + str(error_metadata_set.cmd) + "\n")
+					lock_console_print_and_log(
+						"Command that resulted in the exception: " + str(error_metadata_set.cmd) + "\n", True)
 
-					print("Error setting metadata in \'" + path_file + "\'")
-					print("Error", sys.exc_info())
-					logging.error("Error setting metadata in \'" + path_file + "\'" + str(sys.exc_info()))
-
-					# Append the failed file to a list that will be reported at exit
-					list_failed_files_metadata_set.append(path_file)
+					lock_console_print_and_log("Error setting metadata in \'" + path_file + "\'", True)
+					lock_console_print_and_log("Error", sys.exc_info(), True)
 
 					show_toast("Error", "Failed to tag \'" + path_file + "\'. Check the log for details.")
-				else:
-					time_end = time.monotonic_ns()
 
-					# Keep track of the number of files tagged to present a total statistic at exit
-					set_metadata.total_count_set += 1
-					# Keep track of the total time taken to tag files thrown at us to report a statistic at exit
-					set_metadata.total_time_set += time_end - time_start
+					with mutex_list_files_failed_metadata_set:
+						# Append the failed file to a list that will be reported at exit
+						list_failed_files_metadata_set.append(path_file)
+				else:
+					with mutex_time:
+						# Keep track of the total time taken to tag files thrown at us to report a statistic at exit
+						set_metadata.total_time_set += time.perf_counter_ns() - time_start
+
+					with mutex_count:
+						# Keep track of the number of files tagged to present a total statistic at exit
+						set_metadata.total_count_set += 1
 
 					if output:
-						print(output)
-						logging.info(output)
+						lock_console_print_and_log(output)
 
-					print("Tagged file# " + "{:>4}".format(
-						set_metadata.total_count_set) + ": \'" + path_file + "\' with title (" + title_set.decode(
-						"utf-8") + ")...\n")
-					logging.info("Tagged file# " + "{:>4}".format(
+					lock_console_print_and_log("Tagged file# " + "{:>4}".format(
 						set_metadata.total_count_set) + ": \'" + path_file + "\' with title (" + title_set.decode(
 						"utf-8") + ")...\n")
 			else:
-				print("No metadata tool found at \'" + metadata[INDEX_TOOL_PATH] + "\'\n")
-				logging.error("No metadata tool found at \'" + metadata[INDEX_TOOL_PATH] + "\'\n")
+				lock_console_print_and_log("No metadata tool found at \'" + metadata[INDEX_TOOL_PATH] + "\'\n", True)
 
 		# This would have a (positive) non-zero value only if the percentage was asked to be reported
-		if set_metadata.total_count_percentage:
-			# Setting metadata involves probing. The probed count reflects the actual number of files processed.
-			percentage_completion_print(get_current_metadata.total_count_probe, set_metadata.total_count_percentage)
-
+		with mutex_count:
+			if set_metadata.total_count_percentage:
+				with mutex_console:
+					# Setting metadata involves probing. The probed count reflects the actual number of files processed.
+					percentage_completion_print()
 
 set_metadata.total_count_set = 0
 set_metadata.total_count_percentage = 0
@@ -376,6 +399,7 @@ def total_time_in_hms_get(total_time_ns):
 		seconds) + " seconds")
 
 
+# Print stats. No need to lock access to count/console mutexes here as we're called after all threads have joined
 def statistic_print(list_failed_files_probe, list_failed_files_metadata_set):
 	if len(list_failed_files_probe):
 		print_and_log_spacer()
@@ -400,16 +424,20 @@ def statistic_print(list_failed_files_probe, list_failed_files_metadata_set):
 			print(failed_file)
 			logging.info(failed_file)
 
+	# Print statistics on how long we took to query
+	#
+	# The accumulated time reported through time.perf_counter_ns() seems to be 10 times the actual time
+	# taken! Scale accordingly before we pass it on to the user.
 	print("\nProbed a total of " + str(get_current_metadata.total_count_probe) + "/" + str(
 		get_current_metadata.total_count_files) + " in " + total_time_in_hms_get(
-		get_current_metadata.total_time_probe) + " and tagged a total of " + str(
+		get_current_metadata.total_time_probe / 10) + " and tagged a total of " + str(
 		set_metadata.total_count_set) + "/" + str(
-		set_metadata.total_count_files) + " files in " + total_time_in_hms_get(set_metadata.total_time_set))
+		set_metadata.total_count_files) + " files in " + total_time_in_hms_get(set_metadata.total_time_set / 10))
 	logging.info("\nProbed a total of " + str(get_current_metadata.total_count_probe) + "/" + str(
 		get_current_metadata.total_count_files) + " in " + total_time_in_hms_get(
-		get_current_metadata.total_time_probe) + " and tagged a total of " + str(
+		get_current_metadata.total_time_probe / 10) + " and tagged a total of " + str(
 		set_metadata.total_count_set) + "/" + str(
-		set_metadata.total_count_files) + " files in " + total_time_in_hms_get(set_metadata.total_time_set))
+		set_metadata.total_count_files) + " files in " + total_time_in_hms_get(set_metadata.total_time_set / 10))
 
 
 # For reading tags with UTF-8 encoding, we need a UTF-8 enabled console (or command prompt, in Windows parlance).
@@ -436,6 +464,52 @@ def cmd_line_parse(opt_percentage):
 	return result_parse.percentage, files_to_process
 
 
+# Spawn a pool of threads to handle actual probing and tagging
+def threads_tag(list_files, list_files_failed_probe, list_files_failed_metadata_set, percentage_gather):
+	with ThreadPool(COUNT_THREADS_TAGGER) as pool:
+		pool.starmap(set_metadata, zip(list_files, itertools.repeat(list_files_failed_probe),
+		                               itertools.repeat(list_files_failed_metadata_set),
+		                               itertools.repeat(percentage_gather)))
+
+
+# Like the function name says, initialize the needy
+def initialize(root, script):
+	logging_initialize(root)
+	sound_utf8_warning()
+
+	# Change to the working directory of this Python script. Else, any dependencies will not be found.
+	os.chdir(os.path.dirname(os.path.abspath(script)))
+
+	print("Changing working directory to \'" + os.path.dirname(os.path.abspath(script)) + "\'...\n")
+	logging.info("Changing working directory to \'" + os.path.dirname(os.path.abspath(script)) + "\'...\n")
+
+
+# Walk each path passed on the command line and build lists of files to process
+def path_walk_tag(files_to_process, list_files_from_dir, list_files_standalone, list_files_failed_probe,
+                  list_files_failed_metadata_set, percentage):
+	for path in files_to_process:
+		if os.path.isdir(path):
+			# Only append the files to a list if it's empty. If we had been asked to report percentage,
+			# the list would already be populated with paths of files to process.
+			if not list_files_from_dir:
+				# If it's a directory, walk through for files below
+				for path_dir, _, file_names in os.walk(path):
+					for file_name in file_names:
+						list_files_from_dir.append(os.path.join(path_dir, file_name))
+
+			threads_tag(list_files_from_dir, list_files_failed_probe, list_files_failed_metadata_set,
+			            percentage)
+		else:
+			# Only append the files to a list if it's empty. If we had been asked to report percentage,
+			# the list would already be populated with paths of files to process.
+			if not list_files_standalone:
+				# We got a file, do the needful
+				list_files_standalone.append(path)
+
+	if list_files_standalone:
+		threads_tag(list_files_standalone, list_files_failed_probe, list_files_failed_metadata_set, percentage)
+
+
 def main(argv):
 	exit_code = 0
 
@@ -447,50 +521,38 @@ def main(argv):
 		percentage, files_to_process = cmd_line_parse(opt_percentage)
 
 		if files_to_process:
-			logging_initialize(root)
-			sound_utf8_warning()
+			initialize(root, sys.argv[0])
 
-			# Change to the working directory of this Python script. Else, any dependencies will not be found.
-			os.chdir(os.path.dirname(os.path.abspath(sys.argv[0])))
-
-			print("Changing working directory to \'" + os.path.dirname(os.path.abspath(sys.argv[0])) + "\'...\n")
-			logging.info("Changing working directory to \'" + os.path.dirname(os.path.abspath(sys.argv[0])) + "\'...\n")
-
-			# A list containing the files for which we failed to set metadata.
+			# Lists containing  files failing the probe, and a list of files we failed to set metadata for.
 			# Used to provide a summary of the erroneous files at the end of all.
-			list_failed_files_probe = []
-			list_failed_files_metadata_set = []
+			list_files_failed_probe = []
+			list_files_failed_metadata_set = []
+			# List for processing directories and standalone files passed on the command line
+			list_files_from_dir = []
+			list_files_standalone = []
 
 			if percentage:
+				print("Gathering file count for reporting percentage... ", end = "")
+				logging.info("Gathering file count for reporting percentage... ")
+
 				# Gather a headcount for reporting percentage completion
-				for path in files_to_process:
-					if os.path.isdir(path):
-						# If it's a directory, walk through for files below
-						for path_dir, _, file_names in os.walk(path):
-							for file_name in file_names:
-								path_file = os.path.join(path_dir, file_name)
-								set_metadata(path_file, list_failed_files_probe, list_failed_files_metadata_set,
-								             percentage)
-					else:
-						# We got a file, do the needful
-						set_metadata(path, list_failed_files_probe, list_failed_files_metadata_set, percentage)
+				path_walk_tag(files_to_process, list_files_from_dir, list_files_standalone, list_files_failed_probe,
+				              list_files_failed_metadata_set, percentage)
+
+				print("done.\n\n")
+				logging.info("done.\n\n")
 
 				# We've already gathered the headcount, so flag accordingly
 				percentage = False
 
-			# The actual loop for probing and tagging
-			for path in files_to_process:
-				if os.path.isdir(path):
-					# If it's a directory, walk through for files below
-					for path_dir, _, file_names in os.walk(path):
-						for file_name in file_names:
-							path_file = os.path.join(path_dir, file_name)
-							set_metadata(path_file, list_failed_files_probe, list_failed_files_metadata_set, percentage)
-				else:
-					# We got a file, do the needful
-					set_metadata(path, list_failed_files_probe, list_failed_files_metadata_set, percentage)
+			print("Initiating probing and tagging...\n\n")
+			logging.info("Initiating probing and tagging...\n")
 
-			statistic_print(list_failed_files_probe, list_failed_files_metadata_set)
+			# Start the actual loop probing and tagging
+			path_walk_tag(files_to_process, list_files_from_dir, list_files_standalone, list_files_failed_probe,
+			              list_files_failed_metadata_set, percentage)
+
+			statistic_print(list_files_failed_probe, list_files_failed_metadata_set)
 		# Slows down the script exit, so disabled for now
 		# show_completion_toast(argv[0])
 		else:
@@ -503,6 +565,8 @@ def main(argv):
 		logging.error("Unsupported OS")
 
 		exit_code = 1
+
+	logging.shutdown()
 
 	return exit_code
 
