@@ -6,13 +6,13 @@ A Python script to tag video files with metadata. Currently, only title tagging 
 Note: Use a Python 3.6 environment or above to execute the script.
 
 ## External Tools Used
-Obviously, [Python](https://www.python.org) is used to interpret the script itself. The probing and tagging code uses external tools ('[ffprobe](https://www.ffmpeg.org/)' and '[mkvpropedit](https://mkvtoolnix.download/)'). 'ffprobe' is used to probe the currently set metadata (only title for now), and if any different from the title to be set at hand, invoke 'mkvpropedit' to set so.
+Obviously, [Python](https://www.python.org) is used to interpret the script itself. The probing and tagging code uses external tools ('[ffprobe](https://www.ffmpeg.org/)' and '[mkvpropedit](https://mkvtoolnix.download/)'). `ffprobe` is used to probe the currently set metadata (only title for now), and if any different from the title to be set at hand, invoke `mkvpropedit` to set so.
 
 ## Where to Download the External Tools From
-'ffprobe' is part of the open source ffmpeg package available from https://www.ffmpeg.org, and 'mkvpropedit' is part of the open source MKVToolNix pacakage available from https://mkvtoolnix.download.
+`ffprobe` is part of the open source ffmpeg package available from https://www.ffmpeg.org, and `mkvpropedit` is part of the open source MKVToolNix pacakage available from https://mkvtoolnix.download.
 
 ## Pre-requisites for Use
-Ensure you have these external tools installed and define the path appropriately to 'mkvpropedit' and 'ffprobe' through the following variables under the respective Operating System checks in the function dict_metadata_tool_platform_get() in video_tagger.py:
+Ensure you have these external tools installed and define the path appropriately to `mkvpropedit` and `ffprobe` through the following variables under the respective Operating System checks in the function `dict_metadata_tool_platform_get()` in video_tagger.py:
 
 ```
 path_mkvmerge
@@ -32,7 +32,7 @@ Note: Windows path separators have to double escaped using another backslash, as
 
 Also, ensure that files to tag are not read-only. While clearing the attribute can be implemented in the script itself, I will not go about it. Hence, the onus is on the user (you!) to ensure files are write-able (read-only attributes are not set). I will ignore any bug reports relating to the user not setting proper permissions.
 
-If you'd like a tooltip notification, install [win10toast](https://pypi.org/project/win10toast/) with 'pip install win10toast'.
+If you'd like a tooltip notification on Windows 10, install [win10toast](https://pypi.org/project/win10toast/) with `pip install win10toast`. Tooltips on Linux are supported natively in the script (thanks to `notify-send`).
 
 ## How the Currently Set Title is Parsed
 My collection of movie files are named in the format below:
@@ -79,7 +79,7 @@ Assuming both the files above don't have titles set, the year and/or a 3D marker
   python "C:\Users\You\Video Tagger\video_tagger.py" --percentage-completion <path to the Matroska file to tag>
 ```
 ## Options
-The only option supported currently is to report the percentage of completion: --percentage-completion, or simply: -p. This comes handy when tagging a large number of files recursively (either with the right-click 'Send To' option, or through the command line).
+The only option supported currently is to report the percentage of completion: `--percentage-completion`, or simply: `-p`. This comes handy when tagging a large number of files recursively (either with the right-click 'Send To' option, or through the command line).
 
 You might want to skip this option if you'd like the script to execute a bit faster.
 
