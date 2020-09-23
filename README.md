@@ -9,7 +9,7 @@ A Python script that spawns multiple threads to tag video files with metadata. C
 Obviously, [Python](https://www.python.org) is used to interpret the script itself. The probing and tagging code uses external tools ('[ffprobe](https://www.ffmpeg.org/)' and '[mkvpropedit](https://mkvtoolnix.download/)'). `ffprobe` is used to probe the currently set metadata (only title for now), and if any different from the title to be set at hand, invoke `mkvpropedit` to set so.
 
 ## Where to Download the External Tools From
-`ffprobe` is part of the open source ffmpeg package available from https://www.ffmpeg.org, and `mkvpropedit` is part of the open source MKVToolNix pacakage available from https://mkvtoolnix.download.
+`ffprobe` is part of the open source ffmpeg package available from https://www.ffmpeg.org, and `mkvpropedit` is part of the open source MKVToolNix package available from https://mkvtoolnix.download.
 
 ## Pre-requisites for Use
 Ensure you have these external tools installed and define the path appropriately to `mkvpropedit` and `ffprobe` through the following variables under the respective Operating System checks in the function `dict_metadata_tool_platform_get()` in video_tagger.py:
@@ -25,10 +25,10 @@ For example:
 		path_mkvmerge = "C:\\Program Files\\MKVToolNix\\mkvpropedit.exe"
 		path_ffprobe = "C:\\ffmpeg\\bin\\ffprobe.exe"
 	else:
-		path_mkvmerge = "mkvpropedit"
-		path_ffprobe = "ffprobe"
+		path_mkvmerge = "/usr/bin/mkvpropedit"
+		path_ffprobe = "/usr/bin/ffprobe"
 ```
-Note: Windows path separators have to double escaped using another backslash, as shown in the example above. Unless these tools have already been added to the PATH environment variable, you would have to update the environment, or manually feed the path for use in Linux or one of the Unices.
+**Note**: Windows path separators have to be double escaped using another backslash, as shown in the example above. On Linux, unless these tools have already been added to the PATH environment variable, you would have to update the environment, or manually feed the path.
 
 Also, ensure that files to tag are not read-only. While clearing the attribute can be implemented in the script itself, I will not go about it. Hence, the onus is on the user (you!) to ensure files are write-able (read-only attributes are not set). I will ignore any bug reports relating to the user not setting proper permissions.
 
@@ -81,7 +81,7 @@ Assuming both the files above don't have titles set, the year and/or a 3D marker
 ## Options
 The only option supported currently is to report the percentage of completion: `--percentage-completion`, or simply: `-p`. This comes handy when tagging a large number of files recursively (either with the right-click 'Send To' option, or through the command line).
 
-You might want to skip this option if you'd like the script to execute a bit faster.
+You might want to skip this option if you'd like the script to execute faster.
 
 ## Reporting a Summary
 At the end of its execution, the script presents a summary of files probed, tagged, failures (if any) and time taken. Again, this comes in handy when dealing with a large number of files.
