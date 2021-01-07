@@ -23,10 +23,10 @@ For example:
 ```python
 	if platform.system() == "Windows":
 		path_mkvmerge = "C:\\Program Files\\MKVToolNix\\mkvpropedit.exe"
-		path_ffprobe = "C:\\ffmpeg\\bin\\ffprobe.exe"
+		path_ffprobe  = "C:\\ffmpeg\\bin\\ffprobe.exe"
 	else:
 		path_mkvmerge = "/usr/bin/mkvpropedit"
-		path_ffprobe = "/usr/bin/ffprobe"
+		path_ffprobe  = "/usr/bin/ffprobe"
 ```
 **Note**: Windows path separators have to be double escaped using another backslash, as shown in the example above. On Linux, unless these tools have already been added to the PATH environment variable, you would have to update the environment, or manually feed the path.
 
