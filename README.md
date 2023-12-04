@@ -83,6 +83,8 @@ The only option supported currently is to report the percentage of completion: `
 
 You might want to skip this option if you'd like the script to execute faster.
 
+Usage for command line options is available through the standard Unix `--help` option.
+
 ## Reporting a Summary
 At the end of its execution, the script presents a summary of files probed, tagged, failures (if any) and time taken. Again, this comes in handy when dealing with a large number of files.
 
