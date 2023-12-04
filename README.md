@@ -32,7 +32,7 @@ For example:
 
 Also, ensure that files to tag are not read-only. While clearing the attribute can be implemented in the script itself, I will not go about it. Hence, the onus is on the user (you!) to ensure files are write-able (read-only attributes are not set). I will ignore any bug reports relating to the user not setting proper permissions.
 
-If you'd like a tooltip notification on Windows 10, install [win10toast](https://pypi.org/project/win10toast/) with `pip install win10toast`. Tooltips on Linux are supported natively in the script (thanks to `notify-send`).
+If you'd like a tooltip notification on Windows 10 and above, install [win10toast](https://pypi.org/project/win10toast/) with `pip install win10toast`. Tooltips on Linux are supported natively in the script (thanks to `notify-send`).
 
 ## How the Currently Set Title is Parsed
 My collection of movie files are named in the format below:
@@ -87,10 +87,10 @@ You might want to skip this option if you'd like the script to execute faster.
 At the end of its execution, the script presents a summary of files probed, tagged, failures (if any) and time taken. Again, this comes in handy when dealing with a large number of files.
 
 ## Logging
-For a post-mortem, or simply quenching curiosity, a log file is generated with whatever is attempted by the script. This log is generated in the local application data directory (applicable to Windows), under my name (Jay Ramani). For example, this would be `C:\Users\<user login>\AppData\Local\Jay Ramani`.
+For a post-mortem, or simply quenching curiosity, a log file is generated with whatever is attempted by the script. This log is generated in the local application data directory (applicable to Windows), under my name (Jay Ramani). For example, this would be `C:\Users\<user login>\AppData\Local\Jay Ramani\video_tagger`.
 
 ## Testing and Reporting Bugs
-The tagger has been tested on Windows 10 and on Manjaro Linux. Would be great if someone can help with testing on other platforms and provide feedback.
+The tagger has been tested on Windows 10, 11 and on Manjaro Linux (XFCE). Would be great if someone can help with testing on other platforms and provide feedback.
 
 To report bugs, use the issue tracker with GitHub.
 
