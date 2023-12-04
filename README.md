@@ -56,7 +56,7 @@ Assuming both the files above don't have titles set, the year and/or a 3D marker
   set PATH=%PATH%;C:\Python
   :loop_tag
   IF %1=="" GOTO completed
-  python "C:\Users\You\Video Tagger\video_tagger.py" --percentage-completion %1
+  python "C:\Users\<user login>\Video Tagger\video_tagger.py" --percentage-completion %1
   SHIFT
   GOTO loop_tag
   :completed
@@ -71,12 +71,12 @@ Assuming both the files above don't have titles set, the year and/or a 3D marker
 
 ### Batch Processing Recursively Through a Command
 ```
-  python "C:\Users\You\Video Tagger\video_tagger.py" --percentage-completion <path to a directory containing Matroska files> <path to another directory...> <you get the picture!>
+  python "C:\Users\<user login>\Video Tagger\video_tagger.py" --percentage-completion <path to a directory containing Matroska files> <path to another directory...> <you get the picture!>
 ```
 ### Tagging Single Files
   If you'd prefer going Hans Solo, use the command below to act on a single file:
 ```
-  python "C:\Users\You\Video Tagger\video_tagger.py" --percentage-completion <path to the Matroska file to tag>
+  python "C:\Users\<user login>\Video Tagger\video_tagger.py" --percentage-completion <path to the Matroska file to tag>
 ```
 ## Options
 The only option supported currently is to report the percentage of completion: `--percentage-completion`, or simply: `-p`. This comes handy when tagging a large number of files recursively (either with the right-click 'Send To' option, or through the command line).
