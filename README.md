@@ -89,6 +89,9 @@ At the end of its execution, the script presents a summary of files probed, tagg
 ## Logging
 For a post-mortem, or simply quenching curiosity, a log file is generated with whatever is attempted by the script. This log is generated in the local application data directory (applicable to Windows), under my name (Jay Ramani). For example, this would be `C:\Users\<user login>\AppData\Local\Jay Ramani\video_tagger`.
 
+## Known Issues
+*
+
 ## Testing and Reporting Bugs
 The tagger has been tested on Windows 10, 11 and on Manjaro Linux (XFCE). Would be great if someone can help with testing on other platforms and provide feedback.
 
