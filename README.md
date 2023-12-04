@@ -87,7 +87,7 @@ You might want to skip this option if you'd like the script to execute faster.
 At the end of its execution, the script presents a summary of files probed, tagged, failures (if any) and time taken. Again, this comes in handy when dealing with a large number of files.
 
 ## Logging
-For a post-mortem, or simply quenching curiosity, a log file is generated with whatever is attempted by the script. This log is local to where the script resides.
+For a post-mortem, or simply quenching curiosity, a log file is generated with whatever is attempted by the script. This log is generated in the local application data directory (applicable to Windows), under my name (Jay Ramani). For example, this would be `C:\Users\<user login>\AppData\Local\Jay Ramani`.
 
 ## Testing and Reporting Bugs
 The tagger has been tested on Windows 10 and on Manjaro Linux. Would be great if someone can help with testing on other platforms and provide feedback.
