@@ -91,6 +91,9 @@ At the end of its execution, the script presents a summary of files probed, tagg
 ## Logging
 For a post-mortem, or simply quenching curiosity, a log file is generated with whatever is attempted by the script. This log is generated in the local application data directory (applicable to Windows), under my name (Jay Ramani). For example, this would be `C:\Users\<user login>\AppData\Local\Jay Ramani\video_tagger`.
 
+## TODO (What's Next)
+A GUI front-end to make things easy
+
 ## Known Issues
 *
 
