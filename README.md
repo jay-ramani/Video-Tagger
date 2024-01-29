@@ -47,6 +47,19 @@ For example:
 ```
 Assuming both the files above don't have titles set, the year and/or a 3D marker (including their square braces) are stripped off to retrieve the true title from the file name itself. The title for [1954] Suddenly.mkv is parsed to "Suddenly", and the title for [2009] Avatar [3D].mkv is parsed to "Avatar".
 
+The script strips more identifiers from the function `parse_file_name_from_path()`, as mentioned below:
+
+- If the movie is explicitly named as a 4K video, it would be named at the tail, viz., "[yyyy] Title of the movie [4K]"
+- If the movie is 3D and 4K explicitly, it would be named "[yyyy] Title of the movie [3D][4K]"
+- If the movie is named AV1 explicitly, it would be named "[yyyy] Title of the movie [3D][AV1][4K]"
+
+So, the ordered summary of looking for these identifiers (in reverse order, from the end of the file name) before we parse the actual title from the file name would be:
+1. "[4K]"
+2. "[AV1]"
+3. "[3D]"
+
+TODO: The next version of the script will be parsing this regardless of the order of identifiers.
+
 ## How to Batch Process/Use on Single Files
 ### Batch Processing Recursively/A Selection Through a Simple Right-Click
   On Windows, create a file called "Video Tagger.cmd", or whatever you like but with a .cmd extension, paste the contents as below, and on the Windows Run window, type "shell:sendto" and copy this file in the directory that opens (this is where your items that show up on right-clicking and choosing 'Send To' appear):
