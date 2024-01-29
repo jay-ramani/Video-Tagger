@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
-# Name        : Video Resolution
+# Name        : Video Tagger
 # Purpose     : Set metadata in video using format specific tools
 #             : Note: Requires a path defined for each tool
 # Author      : Jayendran Jayamkondam Ramani
@@ -165,6 +165,25 @@ def parse_file_name_from_path(root):
 
 	# Extract title from the year used in the naming convention "[yyyy] Title of the movie"
 	# If the movie is 3D, the title would contain the string at the name's tail, viz., "[yyyy] Title of the movie [3D]"
+	# If the movie is explicitly named as a 4K video, it would be named at the tail, viz., "[yyyy] Title of the movie [4K]"
+	# If the movie is 3D and 4K explicitly, it would be named "[yyyy] Title of the movie [3D][4K]"
+	# If the movie is named AV1 explicitly, it would be named "[yyyy] Title of the movie [3D][AV1][4K]"
+
+	# So, the ordered summary of looking for these identifiers before we parse the actual title from the file name would
+	# be:
+	# 1. "[4K]"
+	# 2. "[AV1]"
+	# 3. "[3D]"
+
+	# Check if the file contains [4K] in its name
+	if title.partition("[4K]")[1]:
+		# We stepped on an explicitly named 4K file, grab content before the "[4K]" part
+		title = title.partition("[4K]")[0]
+
+	# Check if the file contains [AV1] in its name
+	if title.partition("[AV1]")[1]:
+		# We stepped on an explicitly named AV1 file, grab content before the "[AV1]" part
+		title = title.partition("[AV1]")[0]
 
 	# Check if the file contains [3D] in its name
 	if title.partition("[3D]")[1]:
